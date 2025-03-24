@@ -1,7 +1,6 @@
 import csv
 import os
 import struct
-
 # CSV 파일 읽고 리스트 변환
 def read_csv_to_list(filename):
     data = []
@@ -17,8 +16,8 @@ def read_csv_to_list(filename):
                     data.append([row[0], row[1], row[2], row[3], flammability])  
                 except ValueError:
                     continue    # 데이터 오류 시 무시
-        print("원본 CSV 파일 내용 출력:")    # CSV 내용 일부 출력
-        for row in data:  
+        print("원본 CSV 파일 내용 출력:")
+        for row in data:
             print(row)
     except FileNotFoundError:
         print(f"파일 {filename}을 찾을 수 없습니다.")
@@ -44,50 +43,58 @@ def save_to_csv(filename, data):
     except Exception as e:
         print(f"CSV 저장 오류: {e}")
 
-# 이진 파일 저장
+# ✅ 이진 파일 저장 (진짜 struct 이진 저장 방식)
 def save_to_binary(filename, data):
     try:
         with open(filename, "wb") as file:
             for row in data:
-                line = ",".join(str(item) for item in row) + "\n"
-                file.write(line.encode("utf-8"))  # UTF-8로 인코딩하여 저장
+                # 각 문자열 필드는 고정 길이로 맞춰 자름 + 공백으로 채움
+                substance = row[0][:20].ljust(20)
+                weight = row[1][:10].ljust(10)
+                gravity = row[2][:10].ljust(10)
+                strength = row[3][:10].ljust(10)
+                flammability = row[4]
+
+                packed = struct.pack(
+                    "20s10s10s10sf",
+                    substance.encode("utf-8"),
+                    weight.encode("utf-8"),
+                    gravity.encode("utf-8"),
+                    strength.encode("utf-8"),
+                    flammability
+                )
+                file.write(packed)
     except Exception as e:
         print(f"이진 파일 저장 오류: {e}")
 
-
-# 이진 파일 읽기
+# ✅ 이진 파일 읽기 (struct 언패킹으로 정확히 읽기)
 def read_from_binary(filename):
     try:
         with open(filename, "rb") as file:
-            content = file.read().decode("utf-8")  # UTF-8로 디코딩하여 읽기
-            print(content)
+            record_size = struct.calcsize("20s10s10s10sf")  # 한 레코드 크기 계산
+            print("\n이진 파일 내용 출력:")
+            while True:
+                chunk = file.read(record_size)
+                if not chunk:
+                    break
+                unpacked = struct.unpack("20s10s10s10sf", chunk)
+                decoded = [field.decode("utf-8").strip() if isinstance(field, bytes) else field for field in unpacked]
+                print(decoded)
     except Exception as e:
         print(f"이진 파일 읽기 오류: {e}")
 
+# 파일 경로 (윈도우에서는 r"" 또는 \\ 사용)
+csv_filename = r"C:\Codessey\Week02\Mars_Base_Inventory_List.csv"
+binary_filename = r"C:\Codessey\Week02\Mars_Base_Inventory_List.bin"
+dangerous_csv_filename = r"C:\Codessey\Week02\Mars_Base_Inventory_danger.csv"
 
-# 실행 과정
-csv_filename = "C:\Codessey\Week02\Mars_Base_Inventory_List.csv"
-binary_filename = "C:\Codessey\Week02\Mars_Base_Inventory_List.bin"
-dangerous_csv_filename = "C:\Codessey\Week02\Mars_Base_Inventory_danger.csv"
-
-# CSV 읽기 및 리스트 변환
+# 실행
 inventory_data = read_csv_to_list(csv_filename)
-
-# 인화성 지수 기준 정렬
 sorted_data = sort_by_flammability(inventory_data)
-
-# 0.7 이상 필터링
 dangerous_materials = filter_high_flammability(sorted_data)
 
-# 정렬된 데이터 CSV 저장
 save_to_csv(csv_filename, sorted_data)
-
-# 위험 물질 CSV 저장
 save_to_csv(dangerous_csv_filename, dangerous_materials)
 
-# 정렬된 데이터 이진 파일 저장
 save_to_binary(binary_filename, sorted_data)
-
-# 저장된 이진 파일 읽기
-print("\n 이진 파일 내용 출력:")
 read_from_binary(binary_filename)
