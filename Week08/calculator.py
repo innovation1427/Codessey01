@@ -102,7 +102,7 @@ class Calculator(QWidget):
             background-color: #707070;
         }"""
 
-    # 버튼 클릭시 이벤트 추가
+    # 버튼 클릭시 기능 추가
     def button_clicked(self, key):
         actions = {
             'AC': self.reset,

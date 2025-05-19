@@ -1,4 +1,3 @@
-# calculator.py
 import sys  # 시스템 관련 함수와 인수 처리용
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLineEdit  # PyQt5에서 필요한 위젯들을 임포트
 from PyQt5.QtCore import Qt  # Qt 모듈에서 유용한 정렬 속성을 임포트
